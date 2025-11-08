@@ -1,0 +1,33 @@
+-- Traits.cc - Official Loadstring Script
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local MarketPlaceService = game:GetService("MarketplaceService")
+local GameName = "Unknown Game"
+pcall(function()
+    GameName = MarketPlaceService:GetProductInfo(game.PlaceId).Name
+end)
+
+local Window = Rayfield:CreateWindow({
+   Name = "Traits.cc",
+   LoadingTitle = "Traits.cc",
+   LoadingSubtitle = "by Traits | " .. GameName,
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "TraitsCC",
+      FileName = "Config"
+   }
+})
+
+-- Tabs
+local MainTab = Window:CreateTab("Main", 4483362458)
+local VisualTab = Window:CreateTab("Visual", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+local SettingsTab = Window:CreateTab("Settings", 4483362458)
+
+-- Welcome Labels
+MainTab:CreateLabel("Welcome to Traits.cc - Main")
+VisualTab:CreateLabel("ESP, Tracers, Chams")
+MiscTab:CreateLabel("Fun tools & extras")
+SettingsTab:CreateLabel("UI Settings & Keybinds")
+
+Rayfield:LoadConfiguration()
