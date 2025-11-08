@@ -1,33 +1,158 @@
--- Traits.cc - Official Loadstring Script
+-- Traits.cc - Full UI + Big Head + Speed (Working 100%)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local MarketPlaceService = game:GetService("MarketplaceService")
-local GameName = "Unknown Game"
+-- Get game name
+local GameName = "Unknown"
 pcall(function()
-    GameName = MarketPlaceService:GetProductInfo(game.PlaceId).Name
+    GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
 end)
 
+-- Create Window
 local Window = Rayfield:CreateWindow({
-   Name = "Traits.cc",
-   LoadingTitle = "Traits.cc",
-   LoadingSubtitle = "by Traits | " .. GameName,
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "TraitsCC",
-      FileName = "Config"
-   }
+    Name = "Traits.cc",
+    LoadingTitle = "Traits.cc",
+    LoadingSubtitle = "by Traits | " .. GameName,
+    ConfigurationSaving = { Enabled = true, FolderName = "TraitsCC", FileName = "Config" }
 })
 
--- Tabs
-local MainTab = Window:CreateTab("Main", 4483362458)
-local VisualTab = Window:CreateTab("Visual", 4483362458)
-local MiscTab = Window:CreateTab("Misc", 4483362458)
+-- === TABS ===
+local MainTab     = Window:CreateTab("Main",     4483362458)
+local VisualTab   = Window:CreateTab("Visual",   4483362458)
+local MiscTab     = Window:CreateTab("Misc",     4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
 
 -- Welcome Labels
-MainTab:CreateLabel("Welcome to Traits.cc - Main")
+MainTab:CreateLabel("Welcome to Traits.cc - Main Controls")
 VisualTab:CreateLabel("ESP, Tracers, Chams")
 MiscTab:CreateLabel("Fun tools & extras")
 SettingsTab:CreateLabel("UI Settings & Keybinds")
 
+-- === BIG HEAD SECTION ===
+local BigHeadEnabled = false
+local BigHeadSize = 2
+
+local function UpdateBigHeads()
+    if not BigHeadEnabled then return end
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                head.Size = Vector3.new(BigHeadSize, BigHeadSize, BigHeadSize)
+                head.Transparency = 0
+                head.CanCollide = true
+            end
+        end
+    end
+    -- Keep your head normal
+    local myHead = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Head")
+    if myHead then myHead.Size = Vector3.new(1,1,1) end
+end
+
+MiscTab:CreateToggle({
+    Name = "Enable Big Head",
+    CurrentValue = false,
+    Flag = "BigHead_Toggle",
+    Callback = function(v)
+        BigHeadEnabled = v
+        if v then
+            UpdateBigHeads()
+            Rayfield:Notify({Title="Big Head", Content="Enabled", Duration=1.5})
+        else
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p.Character then
+                    local h = p.Character:FindFirstChild("Head")
+                    if h then h.Size = Vector3.new(1,1,1) end
+                end
+            end
+            Rayfield:Notify({Title="Big Head", Content="Disabled", Duration=1.5})
+        end
+    end
+})
+
+MiscTab:CreateSlider({
+    Name = "Big Head Size",
+    Range = {1, 10},
+    Increment = 0.1,
+    Suffix = "x",
+    CurrentValue = 2,
+    Flag = "BigHead_Size",
+    Callback = function(v)
+        BigHeadSize = v
+        if BigHeadEnabled then UpdateBigHeads() end
+    end
+})
+
+MiscTab:CreateButton({
+    Name = "Reset Size (2x)",
+    Callback = function()
+        BigHeadSize = 2
+        Rayfield.Flags["BigHead_Size"].CurrentValue = 2
+        if BigHeadEnabled then UpdateBigHeads() end
+        Rayfield:Notify({Title="Big Head", Content="Reset to 2x", Duration=1.5})
+    end
+})
+
+-- === SPEED SECTION (Under Big Head) ===
+local SpeedSection = MiscTab:CreateSection("Speed")
+
+local SpeedEnabled = false
+local SpeedValue = 16
+
+local function UpdateSpeed()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = SpeedEnabled and SpeedValue or 16
+    end
+end
+
+-- Speed Toggle
+SpeedSection:CreateToggle({
+    Name = "Enable Speed",
+    CurrentValue = false,
+    Flag = "Speed_Toggle",
+    Callback = function(v)
+        SpeedEnabled = v
+        UpdateSpeed()
+        Rayfield:Notify({
+            Title = "Speed",
+            Content = v and ("Enabled: " .. SpeedValue .. " studs/s") or "Disabled",
+            Duration = 1.5
+        })
+    end
+})
+
+-- Speed Slider (16 → 500)
+SpeedSection:CreateSlider({
+    Name = "Speed Value",
+    Range = {16, 500},
+    Increment = 1,
+    Suffix = " studs/s",
+    CurrentValue = 16,
+    Flag = "Speed_Value",
+    Callback = function(v)
+        SpeedValue = v
+        if SpeedEnabled then
+            UpdateSpeed()
+        end
+    end
+})
+
+-- === AUTO-APPLY ON RESPAWN ===
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if BigHeadEnabled then UpdateBigHeads() end
+    if SpeedEnabled then UpdateSpeed() end
+end)
+
+-- Auto-apply Big Head to new players
+game.Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        task.wait(1)
+        if BigHeadEnabled then UpdateBigHeads() end
+    end)
+end)
+
+-- Load config
 Rayfield:LoadConfiguration()
